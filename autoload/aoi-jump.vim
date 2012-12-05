@@ -1,0 +1,1 @@
+../plugin/aoi-jump.vim
