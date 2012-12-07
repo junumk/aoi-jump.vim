@@ -96,7 +96,7 @@ endfunction
 " }}}
 " {{{ _executeGrep(pattern, backend_base_dir)
 function! _executeGrep(pattern, backend_base_dir)
-    let l:command = printf("grep -r \"%s\" %s | cwin", a:pattern, a:backend_base_dir)
+    let l:command = printf("grep -r \"%s\" %s | cw", a:pattern, a:backend_base_dir)
     "echo l:command
     execute l:command
 endfunction
@@ -136,7 +136,8 @@ endfunction
 " {{{ AoiProcessorJump()
 function! AoiProcessorJump()
   call _init()
-  let l:action_path = substitute(s:current_path, '.*\<act\>', '', '')
+  let l:action_path = substitute(s:current_path, '\<act_cli\>', 'act/Cli', '')
+  let l:action_path = substitute(l:action_path, '.*\<act\>', '', '')
   let l:file_path = printf('%s/Service/*/Processor/%s', s:base_dir, l:action_path)
   execute 'edit ' . l:file_path
 endfunction
@@ -161,7 +162,7 @@ endfunction
 "set grepprg=grep\ -nH
 
 "nnoremap <silent> <space>b :e#<CR>
-"nnoremap <silent> <space>ag :call AoiGreo()<CR>
+"nnoremap <silent> <space>ag :call AoiGrep()<CR>
 "nnoremap <silent> <space>am :call AoiModuleJump()<CR>
 "nnoremap <silent> <space>ap :call AoiProcessorJump()<CR>
 "nnoremap <silent> <space>ac :call AoiClientJump()<CR>
