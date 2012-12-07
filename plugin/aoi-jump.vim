@@ -2,8 +2,8 @@
 "File:        aoi-jump.vim
 "Description: 
 "Maintainer:  Junji Watanabe <watanabe0621@gmail.com>
-"Version:     0.1.1
-"Last Change: 2012/12/06
+"Version:     0.2.0
+"Last Change: 2012/12/07
 "License:
 "
 "============================================================================
@@ -51,6 +51,15 @@ function! _getModuleIdentifier()
   return l:mpdule_idnt
 endfunction
 " }}}
+" {{{ _genarateModuleIdentifier()
+function! _genarateModuleIdentifier()
+  let l:module_path = substitute(s:current_path, '/.*/\<Module/',  '', '')
+  let l:module_path = substitute(l:module_path,  '.php',  '', '')
+  let l:module_path = substitute(l:module_path,  '/',  '_', 'g')
+  let l:module_path = tolower(l:module_path)
+  return l:module_path
+endfunction
+" }}}
 " {{{ _getMethodName()
 function! _getMethodName()
   let l:cursor = split(s:cursor_WORD, '->')
@@ -85,6 +94,13 @@ function! _executeEditFile(path)
   endif
 endfunction
 " }}}
+" {{{ _executeGrep(pattern, backend_base_dir)
+function! _executeGrep(pattern, backend_base_dir)
+    let l:command = printf("grep -r \"%s\" %s | cwin", a:pattern, a:backend_base_dir)
+    "echo l:command
+    execute l:command
+endfunction
+" }}}
 " {{{ _searchMethodDefinition(method_name)
 function! _searchMethodDefinition(method_name)
   let l:searh_str = printf('function %s(', a:method_name)
@@ -93,6 +109,17 @@ endfunction
 " }}}
 
 " main function
+" {{{ AoiGrep()
+function! AoiGrep()
+  call _init()
+  let l:method_name = s:cursor_word
+  let l:module_identifier = _genarateModuleIdentifier()
+  let l:pattern = printf('>%s->%s(', l:module_identifier, l:method_name)
+  let l:backend_base_dir = _getBackendBaseDir()
+
+  call _executeGrep(l:pattern, l:backend_base_dir)
+endfunction
+" }}}
 " {{{ AoiModuleJump()
 function! AoiModuleJump()
   call _init()
@@ -131,8 +158,11 @@ function! SmartyJump()
 endfunction
 " }}}
 
+"set grepprg=grep\ -nH
+
 "nnoremap <silent> <space>b :e#<CR>
-"nnoremap <silent> <space>m :call AoiModuleJump()<CR>
-"nnoremap <silent> <space>p :call AoiProcessorJump()<CR>
-"nnoremap <silent> <space>f :call AoiClientJump()<CR>
+"nnoremap <silent> <space>ag :call AoiGreo()<CR>
+"nnoremap <silent> <space>am :call AoiModuleJump()<CR>
+"nnoremap <silent> <space>ap :call AoiProcessorJump()<CR>
+"nnoremap <silent> <space>ac :call AoiClientJump()<CR>
 "nnoremap <silent> <space>i :call SmartyJump()<CR>
