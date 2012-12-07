@@ -2,69 +2,134 @@
 "File:        aoi-jump.vim
 "Description: 
 "Maintainer:  Junji Watanabe <watanabe0621@gmail.com>
-"Version:     0.0.2
-"Last Change: 2012/12/05
+"Version:     0.1.1
+"Last Change: 2012/12/06
 "License:
 "
 "============================================================================
 
-function! SmartyJump()
-  let current_path = expand("%:p")
-  let tpl_path = '/tpl/' . expand("<cfile>")
-  let include_file_path = substitute(current_path, '/*/\<tpl/.*', tpl_path, '') 
-  if filereadable(include_file_path)
-    execute 'edit ' . include_file_path
+" conf
+" smarty template directory name
+let s:template_dir_name = 'tpl'
+let s:aciton_dir_name   = 'act'
+
+" private function
+" {{{ _init()
+function! _init()
+  let s:current_path = expand("%:p")
+  let s:cursor_file  = expand("<cfile>")
+  let s:cursor_word  = expand("<cword>")
+  let s:cursor_WORD  = expand("<cWORD>")
+
+  let s:base_dir = substitute(s:current_path, '/*/\<Service/.*',  '', '')
+  let s:base_dir = substitute(s:base_dir,     '/*/\<frontend/.*', '', '')
+endfunction
+" }}}
+" {{{ _getBackendBaseDir()
+function! _getBackendBaseDir()
+  let l:backend_base_dir = substitute(s:current_path,     '/*/\<Processor/.*', '', '')
+  let l:backend_base_dir = substitute(l:backend_base_dir, '/*/\<Module/.*',    '', '')
+  let l:backend_base_dir = substitute(l:backend_base_dir, '/*/\<Cascade/.*',   '', '')
+  return l:backend_base_dir
+endfunction
+" }}}
+" {{{ _getFrontendBaseDir()
+function! _getFrontendBaseDir()
+  let l:frontend_base_dir = substitute(s:current_path, '/*/\<tpl/.*',   '', '')
+  return l:frontend_base_dir 
+endfunction
+" }}}
+" {{{ _getModuleIdentifier()
+function! _getModuleIdentifier()
+  let l:cursor = split(s:cursor_WORD, '->')
+  let l:length = len(l:cursor)
+  if l:length == 4
+    let l:mpdule_idnt = l:cursor[2]
+  elseif l:length == 3
+    let l:mpdule_idnt = l:cursor[1]
+  endif
+  return l:mpdule_idnt
+endfunction
+" }}}
+" {{{ _getMethodName()
+function! _getMethodName()
+  let l:cursor = split(s:cursor_WORD, '->')
+  let l:length = len(l:cursor)
+  if l:length == 4
+    let l:method = l:cursor[3]
+  elseif l:length == 3
+    let l:method = l:cursor[2]
+  endif
+  let l:method_name = substitute(l:method, '(.*',  '', '')
+  return l:method_name
+endfunction
+" }}}
+" {{{ _changeCase(str)
+function! _changeCase(str)
+  let l:str = substitute(a:str, "_", "/_/", 'g')
+  let l:str = substitute(l:str, "\\w\\+", "\\u\\0", 'g')
+  let l:str = substitute(l:str, "/_/", "_", 'g')
+  return l:str
+endfunction
+" }}}
+"" 実行系
+" {{{ _executeEditFile(path)
+function! _executeEditFile(path)
+  if filereadable(a:path)
+    execute 'edit ' . a:path
   else
     echohl ErrorMsg
-    echo 'no such file ' . include_file_path
+    echo 'no such file ' . a:path
     echohl None
+    return false
   endif
 endfunction
+" }}}
+" {{{ _searchMethodDefinition(method_name)
+function! _searchMethodDefinition(method_name)
+  let l:searh_str = printf('function %s(', a:method_name)
+  call search(l:searh_str)
+endfunction
+" }}}
 
+" main function
+" {{{ AoiModuleJump()
 function! AoiModuleJump()
-  let current_path = expand("%:p")
-  let backend_dir = substitute(current_path, '/*/\<Processor/.*', '', '')
-  let module_name = expand("<cfile>")
-  let module_path = 'Module/' . substitute(module_name, '_', '/', '') . '.php'
-  let include_file_path = backend_dir . '/' . module_path
-  if filereadable(include_file_path)
-    execute 'edit ' . include_file_path
-  else
-    echohl ErrorMsg
-    echo 'no such file ' . include_file_path
-    echohl None
-  endif
-endfunction
+  call _init()
+  let l:method_name = _getMethodName()
+  let l:module_identifier = _getModuleIdentifier()
+  let l:module_path = substitute(_changeCase(l:module_identifier), '_', '/', 'g')
+  let l:backend_base_dir = _getBackendBaseDir()
+  let l:file_path = printf('%s/Module/%s.php', l:backend_base_dir, l:module_path)
 
+  call _executeEditFile(l:file_path)
+  call _searchMethodDefinition(l:method_name)
+endfunction
+" }}}
+" {{{ AoiProcessorJump()
 function! AoiProcessorJump()
-  let current_path = expand("%:p")
-  let base_dir = substitute(current_path, '/*/\<frontend/.*', '', '')
-  let action_path = substitute(current_path, '.*\<act\>', '', '')
-  let include_file_path = base_dir . '/Service/*/Processor' . action_path
-  execute 'edit ' . include_file_path
-  "if filereadable(include_file_path)
-  "  execute 'edit ' . include_file_path
-  "else
-  "  echohl ErrorMsg
-  "  echo 'no such file ' . include_file_path
-  "  echohl None
-  "endif
+  call _init()
+  let l:action_path = substitute(s:current_path, '.*\<act\>', '', '')
+  let l:file_path = printf('%s/Service/*/Processor/%s', s:base_dir, l:action_path)
+  execute 'edit ' . l:file_path
 endfunction
-
+" }}}
+" {{{ AoiClientJump()
 function! AoiClientJump()
-  let current_path = expand("%:p")
-  let base_dir = substitute(current_path, '/*/\<Service/.*', '', '')
-  let processor_path = substitute(current_path, '.*\<Processor\>', '', '')
-  let include_file_path = base_dir . '/frontend/*/act' . processor_path
-  execute 'edit ' . include_file_path
-  "if filereadable(include_file_path)
-  "  execute 'edit ' . include_file_path
-  "else
-  "  echohl ErrorMsg
-  "  echo 'no such file ' . include_file_path
-  "  echohl None
-  "endif
+  call _init()
+  let l:processor_path = substitute(s:current_path, '.*\<Processor\>', '', '')
+  let l:file_path = printf('%s/frontend/*/%s/%s', s:base_dir, s:aciton_dir_name, l:processor_path)
+  execute 'edit ' . l:file_path
 endfunction
+" }}}
+" {{{ SmartyJump()
+function! SmartyJump()
+  call _init()
+  let l:frontend_base_dir = _getFrontendBaseDir()
+  let l:file_path = printf('%s/%s/%s', l:frontend_base_dir, s:template_dir_name, s:cursor_file)
+  call _executeEditFile(l:file_path)
+endfunction
+" }}}
 
 "nnoremap <silent> <space>b :e#<CR>
 "nnoremap <silent> <space>m :call AoiModuleJump()<CR>
