@@ -30,7 +30,7 @@ function! _backendInit()
   let s:identifier = _getJumpIdentifier()
   let s:jump_path = substitute(_changeCase(s:identifier), '_', '/', 'g')
   let s:backend_base_dir = _getBackendBaseDir()
-  let s:jump_mode = _getJumpMode()
+  call _setJumpMode()
   let s:method_name = _getMethodName()
 endfunction
 " }}}
@@ -60,8 +60,8 @@ function! _getJumpIdentifier()
   return l:idnt
 endfunction
 " }}}
-" {{{ _getJumpMode()
-function! _getJumpMode()
+" {{{ _setJumpMode()
+function! _setJumpMode()
   let l:cursor = split(s:cursor_WORD, '->')
   let l:length = len(l:cursor)
   if l:length == 4
@@ -69,7 +69,17 @@ function! _getJumpMode()
   elseif l:length == 3
     let l:jump_mode = 'module'
   endif
-  return l:jump_mode
+  let s:jump_mode = l:jump_mode
+
+  if s:jump_mode == 'data'
+    let l:method = substitute(l:cursor[3], '(.*',  '', '')
+    if l:method == 'execute'
+      let l:cascade_mode = 'DataFormat'
+    else
+      let l:cascade_mode = 'Gateway'
+    endif
+    let s:cascade_jump_mode = l:cascade_mode
+  endif
 endfunction
 " }}}
 " {{{ _genarateModuleIdentifier()
@@ -167,7 +177,7 @@ function! AoiModuleJump()
   call _init()
   call _backendInit()
   if s:jump_mode == 'data'
-    let l:file_path = printf('%s/Cascade/DataFormat/%s.php', s:backend_base_dir, s:jump_path)
+    let l:file_path = printf('%s/Cascade/%s/%s.php', s:backend_base_dir, s:cascade_jump_mode,s:jump_path)
   elseif s:jump_mode == 'module'
     let l:file_path = printf('%s/Module/%s.php', s:backend_base_dir, s:jump_path)
   endif
