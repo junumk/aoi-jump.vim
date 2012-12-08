@@ -97,7 +97,7 @@ endfunction
 " {{{ _executeGrep(pattern, backend_base_dir)
 function! _executeGrep(pattern, backend_base_dir)
     let l:command = printf("grep -r \"%s\" %s | cw", a:pattern, a:backend_base_dir)
-    "echo l:command
+    echo l:command
     execute l:command
 endfunction
 " }}}
@@ -147,6 +147,7 @@ function! AoiClientJump()
   call _init()
   let l:processor_path = substitute(s:current_path, '.*\<Processor\>', '', '')
   let l:file_path = printf('%s/frontend/*/%s/%s', s:base_dir, s:aciton_dir_name, l:processor_path)
+  let l:file_path = substitute(l:file_path, '\<act\/\/Cli\>', 'act_cli', '')
   execute 'edit ' . l:file_path
 endfunction
 " }}}
