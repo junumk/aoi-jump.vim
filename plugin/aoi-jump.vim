@@ -96,8 +96,11 @@ endfunction
 " }}}
 " {{{ _executeGrep(pattern, backend_base_dir)
 function! _executeGrep(pattern, backend_base_dir)
-    let l:command = printf("grep -r \"%s\" %s | cw", a:pattern, a:backend_base_dir)
-    echo l:command
+    let l:processor_dir = a:backend_base_dir ."/Processor"
+    let l:module_dir    = a:backend_base_dir ."/Module"
+    let l:command = printf("grep \"%s\" %s/**/*.php %s/**/*.php | cw", a:pattern, l:processor_dir, l:module_dir)
+    "echo l:command
+    execute "vsp"
     execute l:command
 endfunction
 " }}}
