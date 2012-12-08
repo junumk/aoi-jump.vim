@@ -2,8 +2,8 @@
 "File:        aoi-jump.vim
 "Description: 
 "Maintainer:  Junji Watanabe <watanabe0621@gmail.com>
-"Version:     0.2.0
-"Last Change: 2012/12/07
+"Version:     0.3.0
+"Last Change: 2012/12/08
 "License:
 "
 "============================================================================
