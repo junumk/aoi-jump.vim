@@ -25,6 +25,15 @@ function! _init()
   let s:base_dir = substitute(s:base_dir,     '/*/\<frontend/.*', '', '')
 endfunction
 " }}}
+" {{{_backendInit()
+function! _backendInit()
+  let s:identifier = _getJumpIdentifier()
+  let s:jump_path = substitute(_changeCase(s:identifier), '_', '/', 'g')
+  let s:backend_base_dir = _getBackendBaseDir()
+  let s:jump_mode = _getJumpMode()
+  let s:method_name = _getMethodName()
+endfunction
+" }}}
 " {{{ _getBackendBaseDir()
 function! _getBackendBaseDir()
   let l:backend_base_dir = substitute(s:current_path,     '/*/\<Processor/.*', '', '')
@@ -39,16 +48,28 @@ function! _getFrontendBaseDir()
   return l:frontend_base_dir 
 endfunction
 " }}}
-" {{{ _getModuleIdentifier()
-function! _getModuleIdentifier()
+" {{{ _getJumpIdentifier()
+function! _getJumpIdentifier()
   let l:cursor = split(s:cursor_WORD, '->')
   let l:length = len(l:cursor)
   if l:length == 4
-    let l:mpdule_idnt = l:cursor[2]
+    let l:idnt = l:cursor[2]
   elseif l:length == 3
-    let l:mpdule_idnt = l:cursor[1]
+    let l:idnt = l:cursor[1]
   endif
-  return l:mpdule_idnt
+  return l:idnt
+endfunction
+" }}}
+" {{{ _getJumpMode()
+function! _getJumpMode()
+  let l:cursor = split(s:cursor_WORD, '->')
+  let l:length = len(l:cursor)
+  if l:length == 4
+    let l:jump_mode = l:cursor[1]
+  elseif l:length == 3
+    let l:jump_mode = 'module'
+  endif
+  return l:jump_mode
 endfunction
 " }}}
 " {{{ _genarateModuleIdentifier()
@@ -64,12 +85,26 @@ endfunction
 function! _getMethodName()
   let l:cursor = split(s:cursor_WORD, '->')
   let l:length = len(l:cursor)
-  if l:length == 4
-    let l:method = l:cursor[3]
-  elseif l:length == 3
-    let l:method = l:cursor[2]
+  if s:jump_mode == 'data'
+    let l:method = substitute(l:cursor[3], '(.*',  '', '')
+    if l:method == 'execute'
+      " get cursor line and next line
+      let l:cursor_line = getline('.') . getline(line('.') + 1)
+      let l:str = substitute(l:cursor_line, '.*(\ *', '', '')
+      let l:result = split(l:str, "'")
+      let l:method_name = l:result[0]
+    else
+      let l:method = l:cursor[3]
+      let l:method_name = substitute(l:method, '(.*',  '', '')
+    endif
+  elseif s:jump_mode == 'module'
+    if l:length == 4
+      let l:method = l:cursor[3]
+    elseif l:length == 3
+      let l:method = l:cursor[2]
+    endif
+    let l:method_name = substitute(l:method, '(.*',  '', '')
   endif
-  let l:method_name = substitute(l:method, '(.*',  '', '')
   return l:method_name
 endfunction
 " }}}
@@ -100,13 +135,16 @@ function! _executeGrep(pattern, backend_base_dir)
     let l:module_dir    = a:backend_base_dir ."/Module"
     let l:command = printf("grep \"%s\" %s/**/*.php %s/**/*.php | cw", a:pattern, l:processor_dir, l:module_dir)
     "echo l:command
-    execute "vsp"
     execute l:command
 endfunction
 " }}}
 " {{{ _searchMethodDefinition(method_name)
 function! _searchMethodDefinition(method_name)
-  let l:searh_str = printf('function %s(', a:method_name)
+  if s:jump_mode == 'data'
+    let l:searh_str = printf("'%s'\ *=>", a:method_name)
+  elseif s:jump_mode == 'module'
+    let l:searh_str = printf('function %s(', a:method_name)
+  endif
   call search(l:searh_str)
 endfunction
 " }}}
@@ -114,6 +152,7 @@ endfunction
 " main function
 " {{{ AoiGrep()
 function! AoiGrep()
+  execute "vsp"
   call _init()
   let l:method_name = s:cursor_word
   let l:module_identifier = _genarateModuleIdentifier()
@@ -126,14 +165,16 @@ endfunction
 " {{{ AoiModuleJump()
 function! AoiModuleJump()
   call _init()
-  let l:method_name = _getMethodName()
-  let l:module_identifier = _getModuleIdentifier()
-  let l:module_path = substitute(_changeCase(l:module_identifier), '_', '/', 'g')
-  let l:backend_base_dir = _getBackendBaseDir()
-  let l:file_path = printf('%s/Module/%s.php', l:backend_base_dir, l:module_path)
+  call _backendInit()
+  if s:jump_mode == 'data'
+    let l:file_path = printf('%s/Cascade/DataFormat/%s.php', s:backend_base_dir, s:jump_path)
+  elseif s:jump_mode == 'module'
+    let l:file_path = printf('%s/Module/%s.php', s:backend_base_dir, s:jump_path)
+  endif
 
+  "echo s:method_name
   call _executeEditFile(l:file_path)
-  call _searchMethodDefinition(l:method_name)
+  call _searchMethodDefinition(s:method_name)
 endfunction
 " }}}
 " {{{ AoiProcessorJump()
