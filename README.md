@@ -7,8 +7,13 @@ aoi-jump.vim is a vim plugin for jump to Aoi Processor, Aoi Module, smarty inclu
 Simply, you can use this plugin with the following shortcuts.
 
      ```
-      " back
-      nnoremap <silent> <space>b  :e#<CR>
+      " grep command setting
+      set grepprg=grep\ -nH
+
+      " back jump list
+      " <C-O>
+      " foward jump list
+      " <C-I>
       " aoi grep
       nnoremap <silent> <space>ag :call AoiGrep()<CR>
       " jump to aoi module

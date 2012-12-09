@@ -213,12 +213,3 @@ function! SmartyJump()
   call _executeEditFile(l:file_path)
 endfunction
 " }}}
-
-"set grepprg=grep\ -nH
-
-"nnoremap <silent> <space>b :e#<CR>
-"nnoremap <silent> <space>ag :call AoiGrep()<CR>
-"nnoremap <silent> <space>am :call AoiModuleJump()<CR>
-"nnoremap <silent> <space>ap :call AoiProcessorJump()<CR>
-"nnoremap <silent> <space>ac :call AoiClientJump()<CR>
-"nnoremap <silent> <space>i :call SmartyJump()<CR>
