@@ -27,11 +27,13 @@ endfunction
 " }}}
 " {{{_backendInit()
 function! _backendInit()
-  let s:identifier = _getJumpIdentifier()
-  let s:jump_path = substitute(_changeCase(s:identifier), '_', '/', 'g')
-  let s:backend_base_dir = _getBackendBaseDir()
   call _setJumpMode()
   let s:method_name = _getMethodName()
+  if s:jump_mode != 'this'
+    let s:identifier = _getJumpIdentifier()
+    let s:jump_path = substitute(_changeCase(s:identifier), '_', '/', 'g')
+    let s:backend_base_dir = _getBackendBaseDir()
+  endif
 endfunction
 " }}}
 " {{{ _getBackendBaseDir()
@@ -68,12 +70,15 @@ function! _setJumpMode()
     let l:jump_mode = l:cursor[1]
   elseif l:length == 3
     let l:jump_mode = 'module'
+  elseif l:length == 2
+    " $this->_hogehoge(...
+    let l:jump_mode = 'this'
   endif
   let s:jump_mode = l:jump_mode
 
   if s:jump_mode == 'data'
     let l:method = substitute(l:cursor[3], '(.*',  '', '')
-    if l:method == 'execute'
+    if l:method == 'execute' || l:method == 'find'
       let l:cascade_mode = 'DataFormat'
     else
       let l:cascade_mode = 'Gateway'
@@ -97,7 +102,7 @@ function! _getMethodName()
   let l:length = len(l:cursor)
   if s:jump_mode == 'data'
     let l:method = substitute(l:cursor[3], '(.*',  '', '')
-    if l:method == 'execute'
+    if l:method == 'execute' || l:method == 'find'
       " get cursor line and next line
       let l:cursor_line = getline('.') . getline(line('.') + 1)
       let l:str = substitute(l:cursor_line, '.*(\ *', '', '')
@@ -113,6 +118,9 @@ function! _getMethodName()
     elseif l:length == 3
       let l:method = l:cursor[2]
     endif
+    let l:method_name = substitute(l:method, '(.*',  '', '')
+  elseif s:jump_mode == 'this'
+    let l:method = l:cursor[1]
     let l:method_name = substitute(l:method, '(.*',  '', '')
   endif
   return l:method_name
@@ -152,7 +160,7 @@ endfunction
 function! _searchMethodDefinition(method_name)
   if s:jump_mode == 'data'
     let l:searh_str = printf("'%s'\ *=>", a:method_name)
-  elseif s:jump_mode == 'module'
+  elseif s:jump_mode == 'module' || s:jump_mode == 'this'
     let l:searh_str = printf('function %s(', a:method_name)
   endif
   call search(l:searh_str)
@@ -176,16 +184,18 @@ endfunction
 function! AoiModuleJump()
   call _init()
   call _backendInit()
-  execute "vsp"
   if s:jump_mode == 'data'
     let l:file_path = printf('%s/Cascade/%s/%s.php', s:backend_base_dir, s:cascade_jump_mode,s:jump_path)
+    call _executeEditFile(l:file_path)
   elseif s:jump_mode == 'module'
+    execute "vsp"
     let l:file_path = printf('%s/Module/%s.php', s:backend_base_dir, s:jump_path)
+    call _executeEditFile(l:file_path)
   endif
 
   "echo s:method_name
-  call _executeEditFile(l:file_path)
   call _searchMethodDefinition(s:method_name)
+  execute 'foldopen'
 endfunction
 " }}}
 " {{{ AoiProcessorJump()
