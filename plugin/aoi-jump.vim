@@ -162,8 +162,8 @@ endfunction
 " main function
 " {{{ AoiGrep()
 function! AoiGrep()
-  execute "vsp"
   call _init()
+  execute "vsp"
   let l:method_name = s:cursor_word
   let l:module_identifier = _genarateModuleIdentifier()
   let l:pattern = printf('>%s->%s(', l:module_identifier, l:method_name)
@@ -176,6 +176,7 @@ endfunction
 function! AoiModuleJump()
   call _init()
   call _backendInit()
+  execute "vsp"
   if s:jump_mode == 'data'
     let l:file_path = printf('%s/Cascade/%s/%s.php', s:backend_base_dir, s:cascade_jump_mode,s:jump_path)
   elseif s:jump_mode == 'module'
