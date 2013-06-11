@@ -138,7 +138,12 @@ endfunction
 " {{{ _executeEditFile(path)
 function! _executeEditFile(path)
   if filereadable(a:path)
+    "execute 'vsp'
+    "execute 'wincmd c'
+    execute 'wincmd w'
     execute 'edit ' . a:path
+    "execute 'wincmd x'
+    "execute 'wincmd x'
   else
     echohl ErrorMsg
     echo 'no such file ' . a:path
@@ -188,14 +193,15 @@ function! AoiModuleJump()
     let l:file_path = printf('%s/Cascade/%s/%s.php', s:backend_base_dir, s:cascade_jump_mode,s:jump_path)
     call _executeEditFile(l:file_path)
   elseif s:jump_mode == 'module'
-    execute "vsp"
+    "execute "vsp"
+    "execute 'wincmd w'
     let l:file_path = printf('%s/Module/%s.php', s:backend_base_dir, s:jump_path)
     call _executeEditFile(l:file_path)
   endif
 
   "echo s:method_name
   call _searchMethodDefinition(s:method_name)
-  execute 'foldopen'
+  "execute 'foldopen'
 endfunction
 " }}}
 " {{{ AoiProcessorJump()
